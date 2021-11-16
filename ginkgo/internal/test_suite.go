@@ -268,7 +268,7 @@ func packageNameForSuite(dir string) string {
 
 func filesHaveGinkgoSuite(dir string, files []os.DirEntry) bool {
 	reTestFile := regexp.MustCompile(`_test\.go$`)
-	reGinkgo := regexp.MustCompile(`package ginkgo|\/ginkgo"`)
+	reGinkgo := regexp.MustCompile(`package ginkgo|\/ginkgo(/v2)*"`)
 
 	for _, file := range files {
 		if !file.IsDir() && reTestFile.Match([]byte(file.Name())) {
