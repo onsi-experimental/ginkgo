@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 )
 
 const TIMEOUT_ELAPSED_FAILURE_REASON = "Suite did not run because the timeout elapsed"

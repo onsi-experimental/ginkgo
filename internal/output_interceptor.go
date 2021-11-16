@@ -37,7 +37,7 @@ turn off all output interception but allow specs to run in parallel without this
 issue.  You may miss important output if you do this including output from Go's
 race detector.
 
-More details on issue #851 - https://github.com/onsi/ginkgo/issues/851
+More details on issue #851 - https://github.com/onsi-experimental/ginkgo/v2/issues/851
 `
 
 /*

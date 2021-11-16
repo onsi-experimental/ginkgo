@@ -10,8 +10,8 @@ import (
 	"strconv"
 
 	"github.com/google/pprof/profile"
-	"github.com/onsi/ginkgo/reporters"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/v2/reporters"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 )
 
 func FinalizeProfilesAndReportsForSuites(suites TestSuites, cliConfig types.CLIConfig, suiteConfig types.SuiteConfig, reporterConfig types.ReporterConfig, goFlagsConfig types.GoFlagsConfig) ([]string, error) {

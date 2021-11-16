@@ -45,7 +45,7 @@ func (d Docs) DocWithURL(url string) Doc {
 var DOCS = Docs{
 	{"index.md", []string{"https://onsi.github.io/ginkgo/"}, "docs/index.md"},
 	{"MIGRATING_TO_V2.md", []string{"https://onsi.github.io/ginkgo/MIGRATING_TO_V2"}, "docs/MIGRATING_TO_V2.md"},
-	{"README.md", []string{"https://github.com/onsi/ginkgo", "https://github.com/onsi/ginkgo/blob/master/README.md"}, "README.md"},
+	{"README.md", []string{"https://github.com/onsi-experimental/ginkgo/v2", "https://github.com/onsi-experimental/ginkgo/v2/blob/master/README.md"}, "README.md"},
 }
 
 type Anchors struct {

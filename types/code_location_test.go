@@ -3,8 +3,8 @@ package types_test
 import (
 	"runtime"
 
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/types"
+	. "github.com/onsi-experimental/ginkgo/v2"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 )
 
@@ -77,9 +77,9 @@ var _ = Describe("CodeLocation", func() {
 Skip: skip()
 /Skip/me
 Something: Func()
-/Users/whoever/gospace/src/github.com/onsi/ginkgo/whatever.go:10 (0x12314)
+/Users/whoever/gospace/src/github.com/onsi-experimental/ginkgo/v2/whatever.go:10 (0x12314)
 SomethingInternalToGinkgo: Func()
-/Users/whoever/gospace/src/github.com/onsi/ginkgo/whatever_else.go:10 (0x12314)
+/Users/whoever/gospace/src/github.com/onsi-experimental/ginkgo/v2/whatever_else.go:10 (0x12314)
 Oops: BlowUp()
 /usr/goroot/pkg/strings/oops.go:10 (0x12341)
 MyCode: Func()

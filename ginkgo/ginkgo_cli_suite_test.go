@@ -3,9 +3,9 @@ package main
 import (
 	"testing"
 
-	"github.com/onsi/ginkgo/internal/test_helpers"
+	"github.com/onsi-experimental/ginkgo/v2/internal/test_helpers"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 

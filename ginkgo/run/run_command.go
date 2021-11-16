@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo/formatter"
-	"github.com/onsi/ginkgo/ginkgo/command"
-	"github.com/onsi/ginkgo/ginkgo/internal"
-	"github.com/onsi/ginkgo/internal/interrupt_handler"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/v2/formatter"
+	"github.com/onsi-experimental/ginkgo/v2/ginkgo/command"
+	"github.com/onsi-experimental/ginkgo/v2/ginkgo/internal"
+	"github.com/onsi-experimental/ginkgo/v2/internal/interrupt_handler"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 )
 
 func BuildRunCommand() command.Command {

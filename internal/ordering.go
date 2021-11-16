@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"sort"
 
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 )
 
 type GroupedSpecIndices []SpecIndices

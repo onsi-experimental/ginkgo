@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo/formatter"
+	"github.com/onsi-experimental/ginkgo/v2/formatter"
 )
 
 type GinkgoFlag struct {

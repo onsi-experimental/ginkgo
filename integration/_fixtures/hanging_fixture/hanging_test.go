@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo/v2"
 )
 
 var _ = AfterSuite(func() {

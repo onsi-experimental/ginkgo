@@ -7,8 +7,8 @@ import (
 	"go/token"
 	"os"
 
-	"github.com/onsi/ginkgo/ginkgo/command"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/v2/ginkgo/command"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 )
 
 const (

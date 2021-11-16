@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/onsi/ginkgo/internal"
-	"github.com/onsi/ginkgo/internal/global"
-	"github.com/onsi/ginkgo/reporters"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/v2/internal"
+	"github.com/onsi-experimental/ginkgo/v2/internal/global"
+	"github.com/onsi-experimental/ginkgo/v2/reporters"
+	"github.com/onsi-experimental/ginkgo/v2/types"
 )
 
 /*
 Report represents the report for a Suite.
-It is documented here: https://pkg.go.dev/github.com/onsi/ginkgo/types#Report
+It is documented here: https://pkg.go.dev/github.com/onsi-experimental/ginkgo/v2/types#Report
 */
 type Report = types.Report
 
 /*
 Report represents the report for a Spec.
-It is documented here: https://pkg.go.dev/github.com/onsi/ginkgo/types#SpecReport
+It is documented here: https://pkg.go.dev/github.com/onsi-experimental/ginkgo/v2/types#SpecReport
 */
 type SpecReport = types.SpecReport
 
@@ -27,7 +27,7 @@ CurrentSpecReport returns information about the current running spec.
 The returned object is a types.SpecReport which includes helper methods
 to make extracting information about the spec easier.
 
-You can learn more about SpecReport here: https://pkg.go.dev/github.com/onsi/ginkgo/types#SpecReport
+You can learn more about SpecReport here: https://pkg.go.dev/github.com/onsi-experimental/ginkgo/v2/types#SpecReport
 You can learn more about CurrentSpecReport() here: https://onsi.github.io/ginkgo/#getting-a-report-for-the-current-spec
 */
 func CurrentSpecReport() SpecReport {

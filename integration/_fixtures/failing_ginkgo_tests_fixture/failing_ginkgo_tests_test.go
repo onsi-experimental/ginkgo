@@ -1,8 +1,8 @@
 package failing_ginkgo_tests_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/integration/_fixtures/failing_ginkgo_tests"
+	. "github.com/onsi-experimental/ginkgo/v2"
+	. "github.com/onsi-experimental/ginkgo/v2/integration/_fixtures/failing_ginkgo_tests"
 	. "github.com/onsi/gomega"
 )
 

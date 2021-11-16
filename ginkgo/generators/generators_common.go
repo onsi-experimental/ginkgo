@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/ginkgo/ginkgo/command"
+	"github.com/onsi-experimental/ginkgo/v2/ginkgo/command"
 )
 
 type GeneratorsConfig struct {

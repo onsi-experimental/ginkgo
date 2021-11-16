@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/onsi/ginkgo/formatter"
+	"github.com/onsi-experimental/ginkgo/v2/formatter"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 )
