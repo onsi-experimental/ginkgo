@@ -2,89 +2,84 @@ package integration_test
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 
-	. "github.com/onsi-experimental/ginkgo"
-	"github.com/onsi-experimental/ginkgo/types"
+	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/types"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("Subcommand", func() {
 	Describe("ginkgo bootstrap", func() {
-		var pkgPath string
+		var pkg string
+
 		BeforeEach(func() {
-			pkgPath = tmpPath("foo")
-			os.Mkdir(pkgPath, 0777)
+			pkg = "foo"
+			fm.MkEmpty(pkg)
 		})
 
 		It("should generate a bootstrap file, as long as one does not exist", func() {
-			session := startGinkgo(pkgPath, "bootstrap")
+			session := startGinkgo(fm.PathTo(pkg), "bootstrap")
 			Eventually(session).Should(gexec.Exit(0))
 			output := session.Out.Contents()
 
 			Ω(output).Should(ContainSubstring("foo_suite_test.go"))
 
-			content, err := os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
+			content := fm.ContentOf(pkg, "foo_suite_test.go")
 			Ω(content).Should(ContainSubstring("package foo_test"))
 			Ω(content).Should(ContainSubstring("func TestFoo(t *testing.T) {"))
 			Ω(content).Should(ContainSubstring("RegisterFailHandler"))
 			Ω(content).Should(ContainSubstring("RunSpecs"))
 
-			Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi-experimental/ginkgo"`))
+			Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi/ginkgo"`))
 			Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi/gomega"`))
 
-			session = startGinkgo(pkgPath, "bootstrap")
+			session = startGinkgo(fm.PathTo(pkg))
+			Eventually(session).Should(gexec.Exit(0))
+
+			session = startGinkgo(fm.PathTo(pkg), "bootstrap")
 			Eventually(session).Should(gexec.Exit(1))
-			output = session.Out.Contents()
-			Ω(output).Should(ContainSubstring("foo_suite_test.go already exists"))
+			output = session.Err.Contents()
+			Ω(output).Should(ContainSubstring("foo_suite_test.go"))
+			Ω(output).Should(ContainSubstring("already exists"))
+		})
+
+		It("should generate a bootstrap file with a working package name if the folder starts with a numeral", func() {
+			fm.MkEmpty("7")
+			session := startGinkgo(fm.PathTo("7"), "bootstrap")
+			Eventually(session).Should(gexec.Exit(0))
+
+			content := fm.ContentOf("7", "7_suite_test.go")
+			pkg := strings.Split(content, "\n")[0]
+			Ω(pkg).Should(Equal("package seven_test"))
+
+			session = startGinkgo(fm.PathTo("7"))
+			Eventually(session).Should(gexec.Exit(0))
 		})
 
 		It("should import nodot declarations when told to", func() {
-			session := startGinkgo(pkgPath, "bootstrap", "--nodot")
+			session := startGinkgo(fm.PathTo(pkg), "bootstrap", "--nodot")
 			Eventually(session).Should(gexec.Exit(0))
 			output := session.Out.Contents()
 
 			Ω(output).Should(ContainSubstring("foo_suite_test.go"))
 
-			content, err := os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
+			content := fm.ContentOf(pkg, "foo_suite_test.go")
 			Ω(content).Should(ContainSubstring("package foo_test"))
 			Ω(content).Should(ContainSubstring("func TestFoo(t *testing.T) {"))
-			Ω(content).Should(ContainSubstring("RegisterFailHandler"))
-			Ω(content).Should(ContainSubstring("RunSpecs"))
+			Ω(content).Should(ContainSubstring("gomega.RegisterFailHandler"))
+			Ω(content).Should(ContainSubstring("ginkgo.RunSpecs"))
 
-			Ω(content).Should(ContainSubstring("var It = ginkgo.It"))
-			Ω(content).Should(ContainSubstring("var Ω = gomega.Ω"))
-
-			Ω(content).Should(ContainSubstring("\t" + `"github.com/onsi-experimental/ginkgo"`))
+			Ω(content).Should(ContainSubstring("\t" + `"github.com/onsi/ginkgo"`))
 			Ω(content).Should(ContainSubstring("\t" + `"github.com/onsi/gomega"`))
-		})
 
-		It("should generate an agouti bootstrap file when told to", func() {
-			session := startGinkgo(pkgPath, "bootstrap", "--agouti")
+			session = startGinkgo(fm.PathTo(pkg))
 			Eventually(session).Should(gexec.Exit(0))
-			output := session.Out.Contents()
-
-			Ω(output).Should(ContainSubstring("foo_suite_test.go"))
-
-			content, err := os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(content).Should(ContainSubstring("package foo_test"))
-			Ω(content).Should(ContainSubstring("func TestFoo(t *testing.T) {"))
-			Ω(content).Should(ContainSubstring("RegisterFailHandler"))
-			Ω(content).Should(ContainSubstring("RunSpecs"))
-
-			Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi-experimental/ginkgo"`))
-			Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi/gomega"`))
-			Ω(content).Should(ContainSubstring("\t" + `"github.com/sclevine/agouti"`))
 		})
 
 		It("should generate a bootstrap file using a template when told to", func() {
-			templateFile := filepath.Join(pkgPath, ".bootstrap")
-			os.WriteFile(templateFile, []byte(`package {{.Package}}
+			fm.WriteFile(pkg, ".bootstrap", `package {{.Package}}
 
 			import (
 				{{.GinkgoImport}}
@@ -96,25 +91,23 @@ var _ = Describe("Subcommand", func() {
 
 			func Test{{.FormattedName}}(t *testing.T) {
 				// This is a {{.Package}} test
-			}`), 0666)
-			session := startGinkgo(pkgPath, "bootstrap", "--template", ".bootstrap")
+			}`)
+			session := startGinkgo(fm.PathTo(pkg), "bootstrap", "--template", ".bootstrap")
 			Eventually(session).Should(gexec.Exit(0))
 			output := session.Out.Contents()
 
 			Ω(output).Should(ContainSubstring("foo_suite_test.go"))
 
-			content, err := os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
+			content := fm.ContentOf(pkg, "foo_suite_test.go")
 			Ω(content).Should(ContainSubstring("package foo_test"))
-			Ω(content).Should(ContainSubstring(`. "github.com/onsi-experimental/ginkgo"`))
+			Ω(content).Should(ContainSubstring(`. "github.com/onsi/ginkgo"`))
 			Ω(content).Should(ContainSubstring(`. "github.com/onsi/gomega"`))
 			Ω(content).Should(ContainSubstring(`"binary"`))
 			Ω(content).Should(ContainSubstring("// This is a foo_test test"))
 		})
 
 		It("should generate a bootstrap file using a template that contains functions when told to", func() {
-			templateFile := filepath.Join(pkgPath, ".bootstrap")
-			os.WriteFile(templateFile, []byte(`package {{.Package}}
+			fm.WriteFile(pkg, ".bootstrap", `package {{.Package}}
 
 			import (
 				{{.GinkgoImport}}
@@ -126,136 +119,113 @@ var _ = Describe("Subcommand", func() {
 
 			func Test{{.FormattedName}}(t *testing.T) {
 				// This is a {{.Package | repeat 3}} test
-			}`), 0666)
-			session := startGinkgo(pkgPath, "bootstrap", "--template", ".bootstrap")
+			}`)
+			session := startGinkgo(fm.PathTo(pkg), "bootstrap", "--template", ".bootstrap")
 			Eventually(session).Should(gexec.Exit(0))
 			output := session.Out.Contents()
 
 			Ω(output).Should(ContainSubstring("foo_suite_test.go"))
 
-			content, err := os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
+			content := fm.ContentOf(pkg, "foo_suite_test.go")
 			Ω(content).Should(ContainSubstring("package foo_test"))
-			Ω(content).Should(ContainSubstring(`. "github.com/onsi-experimental/ginkgo"`))
+			Ω(content).Should(ContainSubstring(`. "github.com/onsi/ginkgo"`))
 			Ω(content).Should(ContainSubstring(`. "github.com/onsi/gomega"`))
 			Ω(content).Should(ContainSubstring(`"binary"`))
 			Ω(content).Should(ContainSubstring("// This is a foo_testfoo_testfoo_test test"))
 		})
 	})
 
-	Describe("nodot", func() {
-		It("should update the declarations in the bootstrap file", func() {
-			pkgPath := tmpPath("foo")
-			os.Mkdir(pkgPath, 0777)
-
-			session := startGinkgo(pkgPath, "bootstrap", "--nodot")
-			Eventually(session).Should(gexec.Exit(0))
-
-			byteContent, err := os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
-
-			content := string(byteContent)
-			content = strings.Replace(content, "var It =", "var MyIt =", -1)
-			content = strings.Replace(content, "var Ω = gomega.Ω\n", "", -1)
-
-			err = os.WriteFile(filepath.Join(pkgPath, "foo_suite_test.go"), []byte(content), os.ModePerm)
-			Ω(err).ShouldNot(HaveOccurred())
-
-			session = startGinkgo(pkgPath, "nodot")
-			Eventually(session).Should(gexec.Exit(0))
-
-			byteContent, err = os.ReadFile(filepath.Join(pkgPath, "foo_suite_test.go"))
-			Ω(err).ShouldNot(HaveOccurred())
-
-			Ω(byteContent).Should(ContainSubstring("var MyIt = ginkgo.It"))
-			Ω(byteContent).ShouldNot(ContainSubstring("var It = ginkgo.It"))
-			Ω(byteContent).Should(ContainSubstring("var Ω = gomega.Ω"))
-		})
-	})
-
 	Describe("ginkgo generate", func() {
-		var pkgPath string
+		var pkg string
 
 		BeforeEach(func() {
-			pkgPath = tmpPath("foo_bar")
-			os.Mkdir(pkgPath, 0777)
+			pkg = "foo_bar"
+			fm.MkEmpty(pkg)
+			Eventually(startGinkgo(fm.PathTo(pkg), "bootstrap")).Should(gexec.Exit(0))
 		})
 
 		Context("with no arguments", func() {
 			It("should generate a test file named after the package", func() {
-				session := startGinkgo(pkgPath, "generate")
+				session := startGinkgo(fm.PathTo(pkg), "generate")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("foo_bar_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "foo_bar_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				By("having the correct content")
+				content := fm.ContentOf(pkg, "foo_bar_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("FooBar", func() {`))
-				Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi-experimental/ginkgo"`))
+				Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi/ginkgo"`))
 				Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi/gomega"`))
 
-				session = startGinkgo(pkgPath, "generate")
-				Eventually(session).Should(gexec.Exit(1))
-				output = session.Out.Contents()
+				By("compiling correctly (we append to the file to make sure gomega is used)")
+				fm.WriteFile(pkg, "foo_bar.go", "package foo_bar\nvar TRUE=true\n")
+				fm.AppendToFile(pkg, "foo_bar_test.go", strings.Join([]string{``,
+					`var _ = It("works", func() {`,
+					`    Expect(foo_bar.TRUE).To(BeTrue())`,
+					`})`,
+				}, "\n"))
+				Eventually(startGinkgo(fm.PathTo(pkg))).Should(gexec.Exit(0))
 
-				Ω(output).Should(ContainSubstring("foo_bar_test.go already exists"))
+				By("refusing to overwrite the file if generate is called again")
+				session = startGinkgo(fm.PathTo(pkg), "generate")
+				Eventually(session).Should(gexec.Exit(1))
+				output = session.Err.Contents()
+
+				Ω(output).Should(ContainSubstring("foo_bar_test.go"))
+				Ω(output).Should(ContainSubstring("already exists"))
 			})
 		})
 
 		Context("with template argument", func() {
 			It("should generate a test file using a template", func() {
-				templateFile := filepath.Join(pkgPath, ".generate")
-				os.WriteFile(templateFile, []byte(`package {{.Package}}
+				fm.WriteFile(pkg, ".generate", `package {{.Package}}
 				import (
-					{{if .IncludeImports}}. "github.com/onsi-experimental/ginkgo"{{end}}
-					{{if .IncludeImports}}. "github.com/onsi/gomega"{{end}}
+					{{.GinkgoImport}}
+					{{.GomegaImport}}
 
 					{{if .ImportPackage}}"{{.PackageImportPath}}"{{end}}
 				)
 
 				var _ = Describe("{{.Subject}}", func() {
 					// This is a {{.Package}} test
-				})`), 0666)
-				session := startGinkgo(pkgPath, "generate", "--template", ".generate")
+				})`)
+				session := startGinkgo(fm.PathTo(pkg), "generate", "--template", ".generate")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("foo_bar_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "foo_bar_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "foo_bar_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
-				Ω(content).Should(ContainSubstring(`. "github.com/onsi-experimental/ginkgo"`))
+				Ω(content).Should(ContainSubstring(`. "github.com/onsi/ginkgo"`))
 				Ω(content).Should(ContainSubstring(`. "github.com/onsi/gomega"`))
 				Ω(content).Should(ContainSubstring(`/foo_bar"`))
 				Ω(content).Should(ContainSubstring("// This is a foo_bar_test test"))
 			})
 
 			It("should generate a test file using a template that contains functions", func() {
-				templateFile := filepath.Join(pkgPath, ".generate")
-				os.WriteFile(templateFile, []byte(`package {{.Package}}
+				fm.WriteFile(pkg, ".generate", `package {{.Package}}
 				import (
-					{{if .IncludeImports}}. "github.com/onsi-experimental/ginkgo"{{end}}
-					{{if .IncludeImports}}. "github.com/onsi/gomega"{{end}}
+					{{.GinkgoImport}}
+					{{.GomegaImport}}
 
 					{{if .ImportPackage}}"{{.PackageImportPath}}"{{end}}
 				)
 
 				var _ = Describe("{{.Subject}}", func() {
 					// This is a {{.Package | repeat 3 }} test
-				})`), 0666)
-				session := startGinkgo(pkgPath, "generate", "--template", ".generate")
+				})`)
+				session := startGinkgo(fm.PathTo(pkg), "generate", "--template", ".generate")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("foo_bar_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "foo_bar_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "foo_bar_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
-				Ω(content).Should(ContainSubstring(`. "github.com/onsi-experimental/ginkgo"`))
+				Ω(content).Should(ContainSubstring(`. "github.com/onsi/ginkgo"`))
 				Ω(content).Should(ContainSubstring(`. "github.com/onsi/gomega"`))
 				Ω(content).Should(ContainSubstring(`/foo_bar"`))
 				Ω(content).Should(ContainSubstring("// This is a foo_bar_testfoo_bar_testfoo_bar_test test"))
@@ -264,14 +234,13 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with an argument of the form: foo", func() {
 			It("should generate a test file named after the argument", func() {
-				session := startGinkgo(pkgPath, "generate", "baz_buzz")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "baz_buzz")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("baz_buzz_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "baz_buzz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "baz_buzz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("BazBuzz", func() {`))
 			})
@@ -279,14 +248,13 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with an argument of the form: foo.go", func() {
 			It("should generate a test file named after the argument", func() {
-				session := startGinkgo(pkgPath, "generate", "baz_buzz.go")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "baz_buzz.go")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("baz_buzz_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "baz_buzz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "baz_buzz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("BazBuzz", func() {`))
 
@@ -295,14 +263,13 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with an argument of the form: foo_test", func() {
 			It("should generate a test file named after the argument", func() {
-				session := startGinkgo(pkgPath, "generate", "baz_buzz_test")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "baz_buzz_test")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("baz_buzz_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "baz_buzz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "baz_buzz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("BazBuzz", func() {`))
 			})
@@ -310,14 +277,13 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with an argument of the form: foo-test", func() {
 			It("should generate a test file named after the argument", func() {
-				session := startGinkgo(pkgPath, "generate", "baz-buzz-test")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "baz-buzz-test")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("baz_buzz_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "baz_buzz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "baz_buzz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("BazBuzz", func() {`))
 			})
@@ -325,14 +291,13 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with an argument of the form: foo_test.go", func() {
 			It("should generate a test file named after the argument", func() {
-				session := startGinkgo(pkgPath, "generate", "baz_buzz_test.go")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "baz_buzz_test.go")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("baz_buzz_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "baz_buzz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "baz_buzz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("BazBuzz", func() {`))
 			})
@@ -340,20 +305,18 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with multiple arguments", func() {
 			It("should generate a test file named after the argument", func() {
-				session := startGinkgo(pkgPath, "generate", "baz", "buzz")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "baz", "buzz")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("baz_test.go"))
 				Ω(output).Should(ContainSubstring("buzz_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "baz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "baz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("Baz", func() {`))
 
-				content, err = os.ReadFile(filepath.Join(pkgPath, "buzz_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content = fm.ContentOf(pkg, "buzz_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
 				Ω(content).Should(ContainSubstring(`var _ = Describe("Buzz", func() {`))
 			})
@@ -361,62 +324,51 @@ var _ = Describe("Subcommand", func() {
 
 		Context("with nodot", func() {
 			It("should not import ginkgo or gomega", func() {
-				session := startGinkgo(pkgPath, "generate", "--nodot")
+				session := startGinkgo(fm.PathTo(pkg), "generate", "--nodot")
 				Eventually(session).Should(gexec.Exit(0))
 				output := session.Out.Contents()
 
 				Ω(output).Should(ContainSubstring("foo_bar_test.go"))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "foo_bar_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "foo_bar_test.go")
 				Ω(content).Should(ContainSubstring("package foo_bar_test"))
-				Ω(content).ShouldNot(ContainSubstring("\t" + `. "github.com/onsi-experimental/ginkgo"`))
+				Ω(content).ShouldNot(ContainSubstring("\t" + `. "github.com/onsi/ginkgo"`))
 				Ω(content).ShouldNot(ContainSubstring("\t" + `. "github.com/onsi/gomega"`))
-			})
-		})
+				Ω(content).Should(ContainSubstring("\t" + `"github.com/onsi/ginkgo"`))
+				Ω(content).Should(ContainSubstring("\t" + `"github.com/onsi/gomega"`))
 
-		Context("with agouti", func() {
-			It("should generate an agouti test file", func() {
-				session := startGinkgo(pkgPath, "generate", "--agouti")
-				Eventually(session).Should(gexec.Exit(0))
-				output := session.Out.Contents()
-
-				Ω(output).Should(ContainSubstring("foo_bar_test.go"))
-
-				content, err := os.ReadFile(filepath.Join(pkgPath, "foo_bar_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
-				Ω(content).Should(ContainSubstring("package foo_bar_test"))
-				Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi-experimental/ginkgo"`))
-				Ω(content).Should(ContainSubstring("\t" + `. "github.com/onsi/gomega"`))
-				Ω(content).Should(ContainSubstring("\t" + `. "github.com/sclevine/agouti/matchers"`))
-				Ω(content).Should(ContainSubstring("\t" + `"github.com/sclevine/agouti"`))
-				Ω(content).Should(ContainSubstring("page, err = agoutiDriver.NewPage()"))
+				By("compiling correctly (we append to the file to make sure gomega is used)")
+				fm.WriteFile(pkg, "foo_bar.go", "package foo_bar\nvar TRUE=true\n")
+				fm.AppendToFile(pkg, "foo_bar_test.go", strings.Join([]string{``,
+					`var _ = ginkgo.It("works", func() {`,
+					`    gomega.Expect(foo_bar.TRUE).To(gomega.BeTrue())`,
+					`})`,
+				}, "\n"))
+				Eventually(startGinkgo(fm.PathTo(pkg))).Should(gexec.Exit(0))
 			})
 		})
 	})
 
 	Describe("ginkgo bootstrap/generate", func() {
-		var pkgPath string
+		var pkg string
 		BeforeEach(func() {
-			pkgPath = tmpPath("some-crazy-thing")
-			os.Mkdir(pkgPath, 0777)
+			pkg = "some-crazy-thing"
+			fm.MkEmpty(pkg)
 		})
 
 		Context("when the working directory is empty", func() {
 			It("generates correctly named bootstrap and generate files with a package name derived from the directory", func() {
-				session := startGinkgo(pkgPath, "bootstrap")
+				session := startGinkgo(fm.PathTo(pkg), "bootstrap")
 				Eventually(session).Should(gexec.Exit(0))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "some_crazy_thing_suite_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "some_crazy_thing_suite_test.go")
 				Ω(content).Should(ContainSubstring("package some_crazy_thing_test"))
 				Ω(content).Should(ContainSubstring("SomeCrazyThing Suite"))
 
-				session = startGinkgo(pkgPath, "generate")
+				session = startGinkgo(fm.PathTo(pkg), "generate")
 				Eventually(session).Should(gexec.Exit(0))
 
-				content, err = os.ReadFile(filepath.Join(pkgPath, "some_crazy_thing_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content = fm.ContentOf(pkg, "some_crazy_thing_test.go")
 				Ω(content).Should(ContainSubstring("package some_crazy_thing_test"))
 				Ω(content).Should(ContainSubstring("SomeCrazyThing"))
 			})
@@ -424,39 +376,37 @@ var _ = Describe("Subcommand", func() {
 
 		Context("when the working directory contains a file with a package name", func() {
 			BeforeEach(func() {
-				Ω(os.WriteFile(filepath.Join(pkgPath, "foo.go"), []byte("package main\n\nfunc main() {}"), 0777)).Should(Succeed())
+				fm.WriteFile(pkg, "foo.go", "package main\n\nfunc main() {}")
 			})
 
 			It("generates correctly named bootstrap and generate files with the package name", func() {
-				session := startGinkgo(pkgPath, "bootstrap")
+				session := startGinkgo(fm.PathTo(pkg), "bootstrap")
 				Eventually(session).Should(gexec.Exit(0))
 
-				content, err := os.ReadFile(filepath.Join(pkgPath, "some_crazy_thing_suite_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content := fm.ContentOf(pkg, "some_crazy_thing_suite_test.go")
 				Ω(content).Should(ContainSubstring("package main_test"))
 				Ω(content).Should(ContainSubstring("SomeCrazyThing Suite"))
 
-				session = startGinkgo(pkgPath, "generate")
+				session = startGinkgo(fm.PathTo(pkg), "generate")
 				Eventually(session).Should(gexec.Exit(0))
 
-				content, err = os.ReadFile(filepath.Join(pkgPath, "some_crazy_thing_test.go"))
-				Ω(err).ShouldNot(HaveOccurred())
+				content = fm.ContentOf(pkg, "some_crazy_thing_test.go")
 				Ω(content).Should(ContainSubstring("package main_test"))
 				Ω(content).Should(ContainSubstring("SomeCrazyThing"))
 			})
 		})
 	})
 
-	Describe("Go module and sginkgo bootstrap/generate", func() {
+	Describe("Go module and ginkgo bootstrap/generate", func() {
 		var (
-			pkgPath     string
+			pkg         string
 			savedGoPath string
 		)
 
 		BeforeEach(func() {
-			pkgPath = tmpPath("myamazingmodule")
-			os.Mkdir(pkgPath, 0777)
-			Expect(os.WriteFile(filepath.Join(pkgPath, "go.mod"), []byte("module fake.com/me/myamazingmodule\n"), 0777)).To(Succeed())
+			pkg = "myamazingmodule"
+			fm.MkEmpty(pkg)
+			fm.WriteFile(pkg, "go.mod", "module fake.com/me/myamazingmodule\n")
 			savedGoPath = os.Getenv("GOPATH")
 			Expect(os.Setenv("GOPATH", "")).To(Succeed())
 			Expect(os.Setenv("GO111MODULE", "on")).To(Succeed()) // needed pre-Go 1.13
@@ -468,69 +418,66 @@ var _ = Describe("Subcommand", func() {
 		})
 
 		It("generates correctly named bootstrap and generate files with the module name", func() {
-			session := startGinkgo(pkgPath, "bootstrap")
+			session := startGinkgo(fm.PathTo(pkg), "bootstrap")
 			Eventually(session).Should(gexec.Exit(0))
 
-			content, err := os.ReadFile(filepath.Join(pkgPath, "myamazingmodule_suite_test.go"))
-			Expect(err).NotTo(HaveOccurred())
+			content := fm.ContentOf(pkg, "myamazingmodule_suite_test.go")
 			Expect(content).To(ContainSubstring("package myamazingmodule_test"), string(content))
 			Expect(content).To(ContainSubstring("Myamazingmodule Suite"), string(content))
 
-			session = startGinkgo(pkgPath, "generate")
+			session = startGinkgo(fm.PathTo(pkg), "generate")
 			Eventually(session).Should(gexec.Exit(0))
 
-			content, err = os.ReadFile(filepath.Join(pkgPath, "myamazingmodule_test.go"))
-			Expect(err).NotTo(HaveOccurred())
+			content = fm.ContentOf(pkg, "myamazingmodule_test.go")
 			Expect(content).To(ContainSubstring("package myamazingmodule_test"), string(content))
 			Expect(content).To(ContainSubstring("fake.com/me/myamazingmodule"), string(content))
 			Expect(content).To(ContainSubstring("Myamazingmodule"), string(content))
 		})
 	})
 
-	Describe("ginkgo blur", func() {
-		It("should unfocus tests", func() {
-			pathToTest := tmpPath("focused")
-			fixture := fixturePath("focused_fixture")
-			copyIn(fixture, pathToTest, true)
+	Describe("ginkgo unfocus", func() {
+		It("should unfocus tests", Label("slow"), func() {
+			fm.MountFixture("focused")
 
-			session := startGinkgo(pathToTest, "--noColor", "-r")
+			session := startGinkgo(fm.PathTo("focused"), "--no-color", "-r")
 			Eventually(session).Should(gexec.Exit(types.GINKGO_FOCUS_EXIT_CODE))
 			output := session.Out.Contents()
 
 			Ω(string(output)).Should(ContainSubstring("Detected Programmatic Focus"))
 
-			session = startGinkgo(pathToTest, "blur")
+			session = startGinkgo(fm.PathTo("focused"), "unfocus")
 			Eventually(session).Should(gexec.Exit(0))
 			output = session.Out.Contents()
 			Ω(string(output)).ShouldNot(ContainSubstring("expected 'package'"))
 
-			session = startGinkgo(pathToTest, "--noColor", "-r")
+			session = startGinkgo(fm.PathTo("focused"), "--no-color", "-r")
 			Eventually(session).Should(gexec.Exit(0))
 			output = session.Out.Contents()
 			Ω(string(output)).Should(ContainSubstring("Ginkgo ran 2 suites"))
 			Ω(string(output)).Should(ContainSubstring("Test Suite Passed"))
 			Ω(string(output)).ShouldNot(ContainSubstring("Detected Programmatic Focus"))
 
-			Expect(sameFile(filepath.Join(pathToTest, "README.md"), filepath.Join(fixture, "README.md"))).To(BeTrue())
+			original := fm.ContentOfFixture("focused", "README.md")
+			updated := fm.ContentOf("focused", "README.md")
+			Ω(original).Should(Equal(updated))
 		})
 
 		It("should ignore the 'vendor' folder", func() {
-			pathToTest := tmpPath("focused_fixture_with_vendor")
-			copyIn(fixturePath("focused_fixture_with_vendor"), pathToTest, true)
+			fm.MountFixture("focused_with_vendor")
 
-			session := startGinkgo(pathToTest, "blur")
+			session := startGinkgo(fm.PathTo("focused_with_vendor"), "unfocus")
 			Eventually(session).Should(gexec.Exit(0))
 
-			session = startGinkgo(pathToTest, "--noColor")
+			session = startGinkgo(fm.PathTo("focused_with_vendor"), "--no-color")
 			Eventually(session).Should(gexec.Exit(0))
 			output := session.Out.Contents()
-			Expect(string(output)).To(ContainSubstring("13 Passed"))
+			Expect(string(output)).To(ContainSubstring("11 Passed"))
 			Expect(string(output)).To(ContainSubstring("0 Skipped"))
 
-			vendorPath := fixturePath("focused_fixture_with_vendor/vendor")
-			otherVendorPath := filepath.Join(pathToTest, "vendor")
+			originalVendorPath := fm.PathToFixtureFile("focused_with_vendor", "vendor")
+			updatedVendorPath := fm.PathTo("focused_with_vendor", "vendor")
 
-			Expect(sameFolder(vendorPath, otherVendorPath)).To(BeTrue())
+			Expect(sameFolder(originalVendorPath, updatedVendorPath)).To(BeTrue())
 		})
 	})
 
@@ -551,11 +498,18 @@ var _ = Describe("Subcommand", func() {
 			output := string(session.Out.Contents())
 
 			Ω(output).Should(MatchRegexp(`Ginkgo Version \d+\.\d+\.\d+`))
-			Ω(output).Should(ContainSubstring("ginkgo watch"))
+			Ω(output).Should(ContainSubstring("watch"))
+			Ω(output).Should(ContainSubstring("generate"))
+			Ω(output).Should(ContainSubstring("run"))
+		})
+
+		It("should print out usage information for subcommands", func() {
+			session := startGinkgo("", "help", "run")
+			Eventually(session).Should(gexec.Exit(0))
+			output := string(session.Out.Contents())
+
 			Ω(output).Should(ContainSubstring("-succinct"))
-			Ω(output).Should(ContainSubstring("-nodes"))
-			Ω(output).Should(ContainSubstring("ginkgo generate"))
-			Ω(output).Should(ContainSubstring("ginkgo help <COMMAND>"))
+			Ω(output).Should(ContainSubstring("-procs"))
 		})
 	})
 })

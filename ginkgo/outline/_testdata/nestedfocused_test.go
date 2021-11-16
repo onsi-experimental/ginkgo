@@ -1,7 +1,7 @@
 package example_test
 
 import (
-	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi/ginkgo"
 )
 
 var _ = FDescribe("unfocused", func() {

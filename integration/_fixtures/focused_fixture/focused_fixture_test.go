@@ -1,8 +1,7 @@
 package focused_fixture_test
 
 import (
-	. "github.com/onsi-experimental/ginkgo"
-	. "github.com/onsi-experimental/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo"
 )
 
 var _ = Describe("FocusedFixture", func() {
@@ -28,13 +27,13 @@ var _ = Describe("FocusedFixture", func() {
 
 	})
 
-	FSpecify("focused", func() {
+	It("focused", Focus, func() {
 
 	})
 
-	FMeasure("focused", func(b Benchmarker) {
+	FSpecify("focused", func() {
 
-	}, 2)
+	})
 
 	FDescribeTable("focused",
 		func() {},
@@ -61,10 +60,6 @@ var _ = Describe("FocusedFixture", func() {
 	It("not focused", func() {
 
 	})
-
-	Measure("not focused", func(b Benchmarker) {
-
-	}, 2)
 
 	DescribeTable("not focused",
 		func() {},

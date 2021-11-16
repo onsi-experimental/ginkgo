@@ -1,13 +1,13 @@
-package fail_fixture_test
+package skip_fixture_test
 
 import (
-	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"testing"
 )
 
-func TestFail_fixture(t *testing.T) {
+func TestSkip_fixture(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Skip_fixture Suite")
 }

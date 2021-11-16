@@ -1,30 +1,44 @@
 package integration_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"encoding/xml"
+	"flag"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/types"
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
+	"github.com/onsi/gomega/gexec"
+
 	"testing"
 	"time"
-
-	. "github.com/onsi-experimental/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/gexec"
 )
 
-var tmpDir string
 var pathToGinkgo string
+var DEBUG bool
+var fm FixtureManager
+
+func init() {
+	flag.BoolVar(&DEBUG, "debug", false, "keep assets around after test run")
+}
 
 func TestIntegration(t *testing.T) {
 	SetDefaultEventuallyTimeout(30 * time.Second)
+	format.TruncatedDiff = false
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Integration Suite")
 }
 
 var _ = SynchronizedBeforeSuite(func() []byte {
+	DeferCleanup(gexec.CleanupBuildArtifacts)
 	pathToGinkgo, err := gexec.Build("../ginkgo")
 	Ω(err).ShouldNot(HaveOccurred())
 	return []byte(pathToGinkgo)
@@ -33,57 +47,140 @@ var _ = SynchronizedBeforeSuite(func() []byte {
 })
 
 var _ = BeforeEach(func() {
-	tmpDir = fmt.Sprintf("./ginko-run-%d", GinkgoParallelNode())
-	err := os.Mkdir(tmpDir, 0700)
-	Ω(err).ShouldNot(HaveOccurred())
+	fm = NewFixtureManager(fmt.Sprintf("tmp_%d", GinkgoParallelProcess()))
 })
 
 var _ = AfterEach(func() {
-	err := os.RemoveAll(tmpDir)
+	if DEBUG {
+		return
+	}
+	suiteConfig, _ := GinkgoConfiguration()
+	if CurrentSpecReport().Failed() && suiteConfig.FailFast {
+		return
+	}
+	fm.Cleanup()
+})
+
+type FixtureManager struct {
+	TmpDir string
+}
+
+func NewFixtureManager(tmpDir string) FixtureManager {
+	err := os.MkdirAll(tmpDir, 0700)
 	Ω(err).ShouldNot(HaveOccurred())
-})
-
-var _ = SynchronizedAfterSuite(func() {}, func() {
-	os.RemoveAll(tmpDir)
-	gexec.CleanupBuildArtifacts()
-})
-
-func tmpPath(destination string) string {
-	return filepath.Join(tmpDir, destination)
+	return FixtureManager{
+		TmpDir: tmpDir,
+	}
 }
 
-func fixturePath(name string) string {
-	return filepath.Join("_fixtures", name)
+func (f FixtureManager) Cleanup() {
+	Ω(os.RemoveAll(f.TmpDir)).Should(Succeed())
 }
 
-func copyIn(sourcePath, destinationPath string, recursive bool) {
-	err := os.MkdirAll(destinationPath, 0777)
+func (f FixtureManager) MountFixture(fixture string, subPackage ...string) {
+	src := filepath.Join("_fixtures", fixture+"_fixture")
+	dst := filepath.Join(f.TmpDir, fixture)
+
+	if len(subPackage) > 0 {
+		src = filepath.Join(src, subPackage[0])
+		dst = filepath.Join(dst, subPackage[0])
+	}
+
+	f.copyAndRewrite(src, dst)
+}
+
+func (f FixtureManager) MkEmpty(pkg string) {
+	ExpectWithOffset(1, os.MkdirAll(f.PathTo(pkg), 0700)).Should(Succeed())
+}
+
+func (f FixtureManager) copyAndRewrite(src string, dst string) {
+	Expect(os.MkdirAll(dst, 0777)).To(Succeed())
+
+	files, err := os.ReadDir(src)
 	Expect(err).NotTo(HaveOccurred())
 
-	files, err := os.ReadDir(sourcePath)
-	Expect(err).NotTo(HaveOccurred())
-	for _, f := range files {
-		srcPath := filepath.Join(sourcePath, f.Name())
-		dstPath := filepath.Join(destinationPath, f.Name())
-		if f.IsDir() {
-			if recursive {
-				copyIn(srcPath, dstPath, recursive)
-			}
+	for _, file := range files {
+		srcPath := filepath.Join(src, file.Name())
+		dstPath := filepath.Join(dst, file.Name())
+		if file.IsDir() {
+			f.copyAndRewrite(srcPath, dstPath)
 			continue
 		}
 
-		src, err := os.Open(srcPath)
-
-		Expect(err).NotTo(HaveOccurred())
-		defer src.Close()
-
-		dst, err := os.Create(dstPath)
-		Expect(err).NotTo(HaveOccurred())
-		defer dst.Close()
-
-		_, err = io.Copy(dst, src)
-		Expect(err).NotTo(HaveOccurred())
+		srcContent, err := os.ReadFile(srcPath)
+		Ω(err).ShouldNot(HaveOccurred())
+		//rewrite import statements so that fixtures can work in the fixture folder when developing them, and in the tmp folder when under test
+		srcContent = bytes.ReplaceAll(srcContent, []byte("github.com/onsi/ginkgo/integration/_fixtures"), []byte(f.PackageRoot()))
+		srcContent = bytes.ReplaceAll(srcContent, []byte("_fixture"), []byte(""))
+		Ω(os.WriteFile(dstPath, srcContent, 0666)).Should(Succeed())
 	}
+}
+
+func (f FixtureManager) AbsPathTo(pkg string, target ...string) string {
+	path, err := filepath.Abs(f.PathTo(pkg, target...))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	return path
+}
+
+func (f FixtureManager) PathTo(pkg string, target ...string) string {
+	if len(target) == 0 {
+		return filepath.Join(f.TmpDir, pkg)
+	}
+	components := append([]string{f.TmpDir, pkg}, target...)
+	return filepath.Join(components...)
+}
+
+func (f FixtureManager) PathToFixtureFile(pkg string, target string) string {
+	return filepath.Join("_fixtures", pkg+"_fixture", target)
+}
+
+func (f FixtureManager) WriteFile(pkg string, target string, content string) {
+	dst := f.PathTo(pkg, target)
+	err := os.WriteFile(dst, []byte(content), 0666)
+	Ω(err).ShouldNot(HaveOccurred())
+}
+
+func (f FixtureManager) AppendToFile(pkg string, target string, content string) {
+	current := f.ContentOf(pkg, target)
+	f.WriteFile(pkg, target, current+content)
+}
+
+func (f FixtureManager) ContentOf(pkg string, target string) string {
+	content, err := os.ReadFile(f.PathTo(pkg, target))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	return string(content)
+}
+
+func (f FixtureManager) LoadJSONReports(pkg string, target string) []types.Report {
+	data := []byte(f.ContentOf(pkg, target))
+	reports := []types.Report{}
+	ExpectWithOffset(1, json.Unmarshal(data, &reports)).Should(Succeed())
+	return reports
+}
+
+func (f FixtureManager) LoadJUnitReport(pkg string, target string) reporters.JUnitTestSuites {
+	data := []byte(f.ContentOf(pkg, target))
+	reports := reporters.JUnitTestSuites{}
+	ExpectWithOffset(1, xml.Unmarshal(data, &reports)).Should(Succeed())
+	return reports
+}
+
+func (f FixtureManager) ContentOfFixture(pkg string, target string) string {
+	content, err := os.ReadFile(f.PathToFixtureFile(pkg, target))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	return string(content)
+}
+
+func (f FixtureManager) RemoveFile(pkg string, target string) {
+	Expect(os.RemoveAll(f.PathTo(pkg, target))).To(Succeed())
+}
+
+func (f FixtureManager) PackageRoot() string {
+	return "github.com/onsi/ginkgo/integration/" + f.TmpDir
+}
+
+func (f FixtureManager) PackageNameFor(target string) string {
+	return f.PackageRoot() + "/" + target
 }
 
 func sameFile(filePath, otherFilePath string) bool {
@@ -122,11 +219,6 @@ func startGinkgo(dir string, args ...string) *gexec.Session {
 	session, err := gexec.Start(cmd, GinkgoWriter, GinkgoWriter)
 	Ω(err).ShouldNot(HaveOccurred())
 	return session
-}
-
-func removeSuccessfully(path string) {
-	err := os.RemoveAll(path)
-	Expect(err).NotTo(HaveOccurred())
 }
 
 func raceDetectorSupported() bool {

@@ -11,8 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/onsi-experimental/ginkgo"
-	. "github.com/onsi-experimental/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
@@ -34,7 +33,6 @@ var _ = DescribeTable("Validate outline from file with",
 
 		wantJSON, err := os.ReadFile(filepath.Join("_testdata", jsonOutlineFilename))
 		Expect(err).To(BeNil(), "error reading JSON outline fixture: %s", err)
-
 		Expect(gotJSON).To(MatchJSON(wantJSON))
 
 		gotCSV := o.String()
@@ -64,7 +62,6 @@ var _ = DescribeTable("Validate outline from file with",
 )
 
 var _ = Describe("Validate position", func() {
-
 	It("should report the correct start and end byte offsets of the ginkgo container or spec", func() {
 		fset := token.NewFileSet()
 		astFile, err := parser.ParseFile(fset, filepath.Join("_testdata", "position_test.go"), nil, 0)

@@ -1,25 +1,23 @@
 package integration_test
 
 import (
-	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("Emitting progress", func() {
-	var pathToTest string
 	var session *gexec.Session
 	var args []string
 
 	BeforeEach(func() {
-		args = []string{"--noColor"}
-		pathToTest = tmpPath("progress")
-		copyIn(fixturePath("progress_fixture"), pathToTest, false)
+		args = []string{"--no-color"}
+		fm.MountFixture("progress")
 	})
 
 	JustBeforeEach(func() {
-		session = startGinkgo(pathToTest, args...)
+		session = startGinkgo(fm.PathTo("progress"), args...)
 		Eventually(session).Should(gexec.Exit(0))
 	})
 
@@ -58,7 +56,7 @@ var _ = Describe("Emitting progress", func() {
 			Ω(session).Should(gbytes.Say(`\[BeforeEach\] Inner Context`))
 			Ω(session).Should(gbytes.Say(`>inner before<`))
 
-			Ω(session).Should(gbytes.Say(`\[BeforeEach\] when Inner When`))
+			Ω(session).Should(gbytes.Say(`\[BeforeEach\] Inner When`))
 			Ω(session).Should(gbytes.Say(`>inner before<`))
 
 			Ω(session).Should(gbytes.Say(`\[JustBeforeEach\] ProgressFixture`))

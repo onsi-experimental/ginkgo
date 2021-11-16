@@ -1,7 +1,7 @@
 package example_test
 
 import (
-	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi/ginkgo"
 )
 
 // Describe start=101, end=237

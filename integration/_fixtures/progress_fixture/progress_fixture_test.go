@@ -3,7 +3,7 @@ package progress_fixture_test
 import (
 	"fmt"
 
-	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi/ginkgo"
 )
 
 var _ = Describe("ProgressFixture", func() {

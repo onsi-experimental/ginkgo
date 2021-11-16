@@ -3,106 +3,20 @@ package integration_test
 import (
 	"strings"
 
-	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 )
 
 var _ = Describe("SuiteSetup", func() {
-	var pathToTest string
-
-	Context("when the BeforeSuite and AfterSuite pass", func() {
-		BeforeEach(func() {
-			pathToTest = tmpPath("suite_setup")
-			copyIn(fixturePath("passing_suite_setup"), pathToTest, false)
-		})
-
-		It("should run the BeforeSuite once, then run all the tests", func() {
-			session := startGinkgo(pathToTest, "--noColor")
-			Eventually(session).Should(gexec.Exit(0))
-			output := string(session.Out.Contents())
-
-			Ω(strings.Count(output, "BEFORE SUITE")).Should(Equal(1))
-			Ω(strings.Count(output, "AFTER SUITE")).Should(Equal(1))
-		})
-
-		It("should run the BeforeSuite once per parallel node, then run all the tests", func() {
-			session := startGinkgo(pathToTest, "--noColor", "--nodes=2")
-			Eventually(session).Should(gexec.Exit(0))
-			output := string(session.Out.Contents())
-
-			Ω(strings.Count(output, "BEFORE SUITE")).Should(Equal(2))
-			Ω(strings.Count(output, "AFTER SUITE")).Should(Equal(2))
-		})
-	})
-
-	Context("when the BeforeSuite fails", func() {
-		BeforeEach(func() {
-			pathToTest = tmpPath("suite_setup")
-			copyIn(fixturePath("failing_before_suite"), pathToTest, false)
-		})
-
-		It("should run the BeforeSuite once, none of the tests, but it should run the AfterSuite", func() {
-			session := startGinkgo(pathToTest, "--noColor")
-			Eventually(session).Should(gexec.Exit(1))
-			output := string(session.Out.Contents())
-
-			Ω(strings.Count(output, "BEFORE SUITE")).Should(Equal(1))
-			Ω(strings.Count(output, "Test Panicked")).Should(Equal(1))
-			Ω(strings.Count(output, "AFTER SUITE")).Should(Equal(1))
-			Ω(output).ShouldNot(ContainSubstring("NEVER SEE THIS"))
-		})
-
-		It("should run the BeforeSuite once per parallel node, none of the tests, but it should run the AfterSuite for each node", func() {
-			session := startGinkgo(pathToTest, "--noColor", "--nodes=2")
-			Eventually(session).Should(gexec.Exit(1))
-			output := string(session.Out.Contents())
-
-			Ω(strings.Count(output, "BEFORE SUITE")).Should(Equal(2))
-			Ω(strings.Count(output, "Test Panicked")).Should(Equal(2))
-			Ω(strings.Count(output, "AFTER SUITE")).Should(Equal(2))
-			Ω(output).ShouldNot(ContainSubstring("NEVER SEE THIS"))
-		})
-	})
-
-	Context("when the AfterSuite fails", func() {
-		BeforeEach(func() {
-			pathToTest = tmpPath("suite_setup")
-			copyIn(fixturePath("failing_after_suite"), pathToTest, false)
-		})
-
-		It("should run the BeforeSuite once, none of the tests, but it should run the AfterSuite", func() {
-			session := startGinkgo(pathToTest, "--noColor")
-			Eventually(session).Should(gexec.Exit(1))
-			output := string(session.Out.Contents())
-
-			Ω(strings.Count(output, "BEFORE SUITE")).Should(Equal(1))
-			Ω(strings.Count(output, "AFTER SUITE")).Should(Equal(1))
-			Ω(strings.Count(output, "Test Panicked")).Should(Equal(1))
-			Ω(strings.Count(output, "A TEST")).Should(Equal(2))
-		})
-
-		It("should run the BeforeSuite once per parallel node, none of the tests, but it should run the AfterSuite for each node", func() {
-			session := startGinkgo(pathToTest, "--noColor", "--nodes=2")
-			Eventually(session).Should(gexec.Exit(1))
-			output := string(session.Out.Contents())
-
-			Ω(strings.Count(output, "BEFORE SUITE")).Should(Equal(2))
-			Ω(strings.Count(output, "AFTER SUITE")).Should(Equal(2))
-			Ω(strings.Count(output, "Test Panicked")).Should(Equal(2))
-			Ω(strings.Count(output, "A TEST")).Should(Equal(2))
-		})
-	})
-
 	Context("With passing synchronized before and after suites", func() {
 		BeforeEach(func() {
-			pathToTest = tmpPath("suite_setup")
-			copyIn(fixturePath("synchronized_setup_tests"), pathToTest, false)
+			fm.MountFixture("synchronized_setup_tests")
 		})
 
-		Context("when run with one node", func() {
-			It("should do all the work on that one node", func() {
-				session := startGinkgo(pathToTest, "--noColor")
+		Context("when run with one proc", func() {
+			It("should do all the work on that one proc", func() {
+				session := startGinkgo(fm.PathTo("synchronized_setup_tests"), "--no-color")
 				Eventually(session).Should(gexec.Exit(0))
 				output := string(session.Out.Contents())
 
@@ -111,11 +25,29 @@ var _ = Describe("SuiteSetup", func() {
 			})
 		})
 
-		Context("when run across multiple nodes", func() {
-			It("should run the first BeforeSuite function (BEFORE_A) on node 1, the second (BEFORE_B) on all the nodes, the first AfterSuite (AFTER_A) on all the nodes, and then the second (AFTER_B) on Node 1 *after* everything else is finished", func() {
-				session := startGinkgo(pathToTest, "--noColor", "--nodes=3")
+		Context("when run across multiple procs", func() {
+			It("should run the first BeforeSuite function (BEFORE_A) on proc 1, the second (BEFORE_B) on all the procs, the first AfterSuite (AFTER_A) on all the procs, and then the second (AFTER_B) on Node 1 *after* everything else is finished", func() {
+				session := startGinkgo(fm.PathTo("synchronized_setup_tests"), "--no-color", "--procs=3")
 				Eventually(session).Should(gexec.Exit(0))
 				output := string(session.Out.Contents())
+
+				numOccurrences := 0
+				for _, line := range strings.Split(output, "\n") {
+					occurs, _ := ContainSubstring("BEFORE_A_1").Match(line)
+					if occurs {
+						numOccurrences += 1
+					}
+				}
+				Ω(numOccurrences).Should(Equal(2)) // once when it's emitted because it's in the synchronizedBeforeSuite proc.  And once again when it's captured in the spec report that includes the stdout output.
+
+				numOccurrences = 0
+				for _, line := range strings.Split(output, "\n") {
+					occurs, _ := ContainSubstring("AFTER_B_1").Match(line)
+					if occurs {
+						numOccurrences += 1
+					}
+				}
+				Ω(numOccurrences).Should(Equal(2)) // once when it's emitted because it's in the synchronizedAfterSuite proc.  And once again when it's captured in the spec report that includes the stdout output.
 
 				Ω(output).Should(ContainSubstring("BEFORE_A_1"))
 				Ω(output).Should(ContainSubstring("BEFORE_B_1: DATA"))
@@ -134,45 +66,20 @@ var _ = Describe("SuiteSetup", func() {
 				Ω(output).ShouldNot(ContainSubstring("AFTER_B_3"))
 			})
 		})
-
-		Context("when streaming across multiple nodes", func() {
-			It("should run the first BeforeSuite function (BEFORE_A) on node 1, the second (BEFORE_B) on all the nodes, the first AfterSuite (AFTER_A) on all the nodes, and then the second (AFTER_B) on Node 1 *after* everything else is finished", func() {
-				session := startGinkgo(pathToTest, "--noColor", "--nodes=3", "--stream")
-				Eventually(session).Should(gexec.Exit(0))
-				output := string(session.Out.Contents())
-
-				Ω(output).Should(ContainSubstring("[1] BEFORE_A_1"))
-				Ω(output).Should(ContainSubstring("[1] BEFORE_B_1: DATA"))
-				Ω(output).Should(ContainSubstring("[2] BEFORE_B_2: DATA"))
-				Ω(output).Should(ContainSubstring("[3] BEFORE_B_3: DATA"))
-
-				Ω(output).ShouldNot(ContainSubstring("BEFORE_A_2"))
-				Ω(output).ShouldNot(ContainSubstring("BEFORE_A_3"))
-
-				Ω(output).Should(ContainSubstring("[1] AFTER_A_1"))
-				Ω(output).Should(ContainSubstring("[2] AFTER_A_2"))
-				Ω(output).Should(ContainSubstring("[3] AFTER_A_3"))
-				Ω(output).Should(ContainSubstring("[1] AFTER_B_1"))
-
-				Ω(output).ShouldNot(ContainSubstring("AFTER_B_2"))
-				Ω(output).ShouldNot(ContainSubstring("AFTER_B_3"))
-			})
-		})
 	})
 
 	Context("With a failing synchronized before suite", func() {
 		BeforeEach(func() {
-			pathToTest = tmpPath("suite_setup")
-			copyIn(fixturePath("exiting_synchronized_setup_tests"), pathToTest, false)
+			fm.MountFixture("exiting_synchronized_setup")
 		})
 
-		It("should fail and let the user know that node 1 disappeared prematurely", func() {
-			session := startGinkgo(pathToTest, "--noColor", "--nodes=3")
+		It("should fail and let the user know that proc 1 disappeared prematurely", func() {
+			session := startGinkgo(fm.PathTo("exiting_synchronized_setup"), "--no-color", "--procs=3")
 			Eventually(session).Should(gexec.Exit(1))
-			output := string(session.Out.Contents())
+			output := string(session.Out.Contents()) + string(session.Err.Contents())
 
-			Ω(output).Should(ContainSubstring("Node 1 disappeared before completing BeforeSuite"))
-			Ω(output).Should(ContainSubstring("Ginkgo timed out waiting for all parallel nodes to report back!"))
+			Ω(output).Should(ContainSubstring("Process #1 disappeard before SynchronizedBeforeSuite could report back"))
+			Ω(output).Should(ContainSubstring("Ginkgo timed out waiting for all parallel procs to report back"))
 		})
 	})
 })
