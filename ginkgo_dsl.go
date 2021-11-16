@@ -5,7 +5,7 @@ The godoc documentation describes Ginkgo's API.  More comprehensive documentatio
 
 Ginkgo's preferred matcher library is [Gomega](http://github.com/onsi/gomega)
 
-Ginkgo on Github: http://github.com/onsi/ginkgo
+Ginkgo on Github: http://github.com/onsi-experimental/ginkgo
 
 Ginkgo is MIT-Licensed
 */
@@ -21,16 +21,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/internal/codelocation"
-	"github.com/onsi/ginkgo/internal/global"
-	"github.com/onsi/ginkgo/internal/remote"
-	"github.com/onsi/ginkgo/internal/testingtproxy"
-	"github.com/onsi/ginkgo/internal/writer"
-	"github.com/onsi/ginkgo/reporters"
-	"github.com/onsi/ginkgo/reporters/stenographer"
-	colorable "github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/config"
+	"github.com/onsi-experimental/ginkgo/internal/codelocation"
+	"github.com/onsi-experimental/ginkgo/internal/global"
+	"github.com/onsi-experimental/ginkgo/internal/remote"
+	"github.com/onsi-experimental/ginkgo/internal/testingtproxy"
+	"github.com/onsi-experimental/ginkgo/internal/writer"
+	"github.com/onsi-experimental/ginkgo/reporters"
+	"github.com/onsi-experimental/ginkgo/reporters/stenographer"
+	colorable "github.com/onsi-experimental/ginkgo/reporters/stenographer/support/go-colorable"
+	"github.com/onsi-experimental/ginkgo/types"
 )
 
 var deprecationTracker = types.NewDeprecationTracker()

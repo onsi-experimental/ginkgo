@@ -1,15 +1,15 @@
 package spec_iterator_test
 
 import (
-	. "github.com/onsi/ginkgo/internal/spec_iterator"
+	. "github.com/onsi-experimental/ginkgo/internal/spec_iterator"
 
-	"github.com/onsi/ginkgo/internal/codelocation"
-	"github.com/onsi/ginkgo/internal/containernode"
-	"github.com/onsi/ginkgo/internal/leafnodes"
-	"github.com/onsi/ginkgo/internal/spec"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/internal/codelocation"
+	"github.com/onsi-experimental/ginkgo/internal/containernode"
+	"github.com/onsi-experimental/ginkgo/internal/leafnodes"
+	"github.com/onsi-experimental/ginkgo/internal/spec"
+	"github.com/onsi-experimental/ginkgo/types"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 )
 

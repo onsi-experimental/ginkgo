@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 )
 
 var _ = Describe("DebugParallelFixture", func() {

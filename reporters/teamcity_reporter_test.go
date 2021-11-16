@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/internal/codelocation"
-	"github.com/onsi/ginkgo/reporters"
-	"github.com/onsi/ginkgo/types"
+	. "github.com/onsi-experimental/ginkgo"
+	"github.com/onsi-experimental/ginkgo/config"
+	"github.com/onsi-experimental/ginkgo/internal/codelocation"
+	"github.com/onsi-experimental/ginkgo/reporters"
+	"github.com/onsi-experimental/ginkgo/types"
 	. "github.com/onsi/gomega"
 )
 

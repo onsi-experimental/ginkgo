@@ -3,7 +3,7 @@
 package tags_tests_test
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 )
 
 var _ = Describe("Ignored", func() {

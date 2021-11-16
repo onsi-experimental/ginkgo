@@ -1,12 +1,12 @@
 package testingtproxy_test
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/onsi/gomega/gbytes"
 
-	"github.com/onsi/ginkgo/internal/testingtproxy"
+	"github.com/onsi-experimental/ginkgo/internal/testingtproxy"
 )
 
 type messagedCall struct {

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/onsi/ginkgo/ginkgo/nodot"
+	"github.com/onsi-experimental/ginkgo/ginkgo/nodot"
 )
 
 func BuildNodotCommand() *Command {

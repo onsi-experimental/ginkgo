@@ -12,9 +12,9 @@ package remote
 import (
 	"time"
 
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/reporters/stenographer"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/config"
+	"github.com/onsi-experimental/ginkgo/reporters/stenographer"
+	"github.com/onsi-experimental/ginkgo/types"
 )
 
 type configAndSuite struct {

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/formatter"
+	"github.com/onsi-experimental/ginkgo/config"
+	"github.com/onsi-experimental/ginkgo/formatter"
 )
 
 type Deprecation struct {
@@ -22,7 +22,7 @@ var Deprecations = deprecations{}
 
 func (d deprecations) CustomReporter() Deprecation {
 	return Deprecation{
-		Message: "You are using a custom reporter.  Support for custom reporters will likely be removed in V2.  Most users were using them to generate junit or teamcity reports and this functionality will be merged into the core reporter.  In addition, Ginkgo 2.0 will support emitting a JSON-formatted report that users can then manipulate to generate custom reports.\n\n{{red}}{{bold}}If this change will be impactful to you please leave a comment on {{cyan}}{{underline}}https://github.com/onsi/ginkgo/issues/711{{/}}",
+		Message: "You are using a custom reporter.  Support for custom reporters will likely be removed in V2.  Most users were using them to generate junit or teamcity reports and this functionality will be merged into the core reporter.  In addition, Ginkgo 2.0 will support emitting a JSON-formatted report that users can then manipulate to generate custom reports.\n\n{{red}}{{bold}}If this change will be impactful to you please leave a comment on {{cyan}}{{underline}}https://github.com/onsi-experimental/ginkgo/issues/711{{/}}",
 		DocLink: "removed-custom-reporters",
 		Version: "1.16.0",
 	}
@@ -111,14 +111,14 @@ func (d *DeprecationTracker) DeprecationsReport() string {
 	out += formatter.F("{{light-yellow}}============================================={{/}}\n")
 	out += formatter.F("{{bold}}{{green}}Ginkgo 2.0{{/}} is under active development and will introduce several new features, improvements, and a small handful of breaking changes.\n")
 	out += formatter.F("A release candidate for 2.0 is now available and 2.0 should GA in Fall 2021.  {{bold}}Please give the RC a try and send us feedback!{{/}}\n")
-	out += formatter.F("  - To learn more, view the migration guide at {{cyan}}{{underline}}https://github.com/onsi/ginkgo/blob/ver2/docs/MIGRATING_TO_V2.md{{/}}\n")
-	out += formatter.F("  - For instructions on using the Release Candidate visit {{cyan}}{{underline}}https://github.com/onsi/ginkgo/blob/ver2/docs/MIGRATING_TO_V2.md#using-the-beta{{/}}\n")
-	out += formatter.F("  - To comment, chime in at {{cyan}}{{underline}}https://github.com/onsi/ginkgo/issues/711{{/}}\n\n")
+	out += formatter.F("  - To learn more, view the migration guide at {{cyan}}{{underline}}https://github.com/onsi-experimental/ginkgo/blob/ver2/docs/MIGRATING_TO_V2.md{{/}}\n")
+	out += formatter.F("  - For instructions on using the Release Candidate visit {{cyan}}{{underline}}https://github.com/onsi-experimental/ginkgo/blob/ver2/docs/MIGRATING_TO_V2.md#using-the-beta{{/}}\n")
+	out += formatter.F("  - To comment, chime in at {{cyan}}{{underline}}https://github.com/onsi-experimental/ginkgo/issues/711{{/}}\n\n")
 
 	for deprecation, locations := range d.deprecations {
 		out += formatter.Fi(1, "{{yellow}}"+deprecation.Message+"{{/}}\n")
 		if deprecation.DocLink != "" {
-			out += formatter.Fi(1, "{{bold}}Learn more at:{{/}} {{cyan}}{{underline}}https://github.com/onsi/ginkgo/blob/ver2/docs/MIGRATING_TO_V2.md#%s{{/}}\n", deprecation.DocLink)
+			out += formatter.Fi(1, "{{bold}}Learn more at:{{/}} {{cyan}}{{underline}}https://github.com/onsi-experimental/ginkgo/blob/ver2/docs/MIGRATING_TO_V2.md#%s{{/}}\n", deprecation.DocLink)
 		}
 		for _, location := range locations {
 			out += formatter.Fi(2, "{{gray}}%s{{/}}\n", location)

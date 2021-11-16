@@ -3,8 +3,8 @@ package leafnodes
 import (
 	"time"
 
-	"github.com/onsi/ginkgo/internal/failer"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/internal/failer"
+	"github.com/onsi-experimental/ginkgo/types"
 )
 
 type SuiteNode interface {

@@ -1,12 +1,12 @@
 package leafnodes_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/internal/leafnodes"
+	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi-experimental/ginkgo/internal/leafnodes"
 	. "github.com/onsi/gomega"
 
-	"github.com/onsi/ginkgo/internal/codelocation"
-	"github.com/onsi/ginkgo/types"
+	"github.com/onsi-experimental/ginkgo/internal/codelocation"
+	"github.com/onsi-experimental/ginkgo/types"
 )
 
 var _ = Describe("It Nodes", func() {

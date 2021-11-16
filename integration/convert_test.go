@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 )
 

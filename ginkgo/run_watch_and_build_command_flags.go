@@ -6,7 +6,7 @@ import (
 
 	"time"
 
-	"github.com/onsi/ginkgo/config"
+	"github.com/onsi-experimental/ginkgo/config"
 )
 
 type RunWatchAndBuildCommandFlags struct {

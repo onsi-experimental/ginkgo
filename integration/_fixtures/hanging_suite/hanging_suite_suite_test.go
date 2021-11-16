@@ -1,7 +1,7 @@
 package hanging_suite_test
 
 import (
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"testing"

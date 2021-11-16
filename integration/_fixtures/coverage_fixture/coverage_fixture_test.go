@@ -1,10 +1,10 @@
 package coverage_fixture_test
 
 import (
-	. "github.com/onsi/ginkgo/integration/_fixtures/coverage_fixture"
-	. "github.com/onsi/ginkgo/integration/_fixtures/coverage_fixture/external_coverage_fixture"
+	. "github.com/onsi-experimental/ginkgo/integration/_fixtures/coverage_fixture"
+	. "github.com/onsi-experimental/ginkgo/integration/_fixtures/coverage_fixture/external_coverage_fixture"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 )
 

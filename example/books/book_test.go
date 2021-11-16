@@ -1,8 +1,8 @@
 package books_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/example/books"
+	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi-experimental/ginkgo/example/books"
 	. "github.com/onsi/gomega"
 )
 

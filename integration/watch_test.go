@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gbytes"
 	"github.com/onsi/gomega/gexec"
@@ -32,7 +32,7 @@ var _ = Describe("Watch", func() {
 
 			src, err := io.ReadAll(r)
 			Ω(err).ShouldNot(HaveOccurred())
-			out := strings.ReplaceAll(string(src), "$ROOT_PATH$", "github.com/onsi/ginkgo/integration/"+rootPath)
+			out := strings.ReplaceAll(string(src), "$ROOT_PATH$", "github.com/onsi-experimental/ginkgo/integration/"+rootPath)
 			r.Close()
 
 			err = os.WriteFile(filePath, []byte(out), 0666)

@@ -1,4 +1,4 @@
-module github.com/onsi/ginkgo
+module github.com/onsi-experimental/ginkgo
 
 go 1.16
 

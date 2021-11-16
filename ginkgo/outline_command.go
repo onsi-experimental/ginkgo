@@ -8,7 +8,7 @@ import (
 	"go/token"
 	"os"
 
-	"github.com/onsi/ginkgo/ginkgo/outline"
+	"github.com/onsi-experimental/ginkgo/ginkgo/outline"
 )
 
 const (

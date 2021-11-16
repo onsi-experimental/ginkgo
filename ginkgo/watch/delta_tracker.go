@@ -5,7 +5,7 @@ import (
 
 	"regexp"
 
-	"github.com/onsi/ginkgo/ginkgo/testsuite"
+	"github.com/onsi-experimental/ginkgo/ginkgo/testsuite"
 )
 
 type SuiteErrors map[testsuite.TestSuite]error

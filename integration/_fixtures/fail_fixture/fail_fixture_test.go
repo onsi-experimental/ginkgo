@@ -1,8 +1,8 @@
 package fail_fixture_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi-experimental/ginkgo"
+	. "github.com/onsi-experimental/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 

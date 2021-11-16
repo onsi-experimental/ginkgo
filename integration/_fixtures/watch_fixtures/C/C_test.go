@@ -3,7 +3,7 @@ package C_test
 import (
 	. "$ROOT_PATH$/C"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi-experimental/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
